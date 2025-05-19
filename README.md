@@ -17,6 +17,7 @@ Schematic illustration of the NeXtMD framework. (A) Overview of the NeXtMD archi
 * lightgbm==3.3.5 
 * tensorflow==2.12.0
 
+`<hello world>` 
 <conda create -n NeXtMD_env python=3.8>
 
 ## Datasets
