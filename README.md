@@ -38,5 +38,5 @@ Amino_acid_attribution_score.py is using for AIP datasets' amino acid analysis.
 Sequence_length_detection.py is using for AIP datasets' sequence length analysis.
 Characteristic_ablation.py & MLmodel _ablation.py are using for NeXtMD's ablation testing.
 
-## contact
+## Contact
 If you have any questions, comments, or would like to report a bug, please file a Github issue or contact me.
