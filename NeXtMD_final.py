@@ -9,61 +9,17 @@ from tensorflow.keras import layers, models, callbacks
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from xgboost import XGBClassifier
+import lightgbm as lgb
+from sklearn.metrics import (accuracy_score, f1_score, matthews_corrcoef,
+                             precision_score, recall_score, roc_auc_score, roc_curve)
+from sklearn.model_selection import KFold
+from sklearn.base import clone
 
 # Dataset reading
-def read_dataset_amp(file_path: str):
-    labels = []
-    sequences = []
-    with open(file_path, 'r') as file:
-        while True:
-            label_line = file.readline().strip()
-            if not label_line:
-                break
-            label = int(label_line.split('|')[-1])
-            sequence_line = file.readline().strip()
-            labels.append(label)
-            sequences.append(sequence_line)
-    return sequences, labels
-
-def read_dataset_zero(file_path: str):
-    labels = []
-    sequences = []
-    with open(file_path, 'r') as file:
-        while True:
-            label_line = file.readline().strip()
-            if not label_line:
-                break
-            if 'AMP' in label_line:
-                label = 1
-            elif 'NEGATIVE' in label_line:
-                label = 0
-            else:
-                print("Error!")
-            sequence_line = file.readline().strip()
-            labels.append(label)
-            sequences.append(sequence_line)
-    return sequences, labels
-
 def read_dataset_aip(file_path: str):
-    labels = []
-    sequences = []
-    with open(file_path, 'r') as file:
-        while True:
-            label_line = file.readline().strip()
-            if not label_line:
-                break
-            if 'Positive' in label_line:
-                label = 1
-            elif 'Negative' in label_line:
-                label = 0
-            else:
-                print("Error!")
-            sequence_line = file.readline().strip()
-            labels.append(label)
-            sequences.append(sequence_line)
-    return sequences, labels
-
-def read_dataset_from_aipstack_work(file_path: str):
     labels = []
     sequences = []
     with open(file_path, 'r') as file:
@@ -74,25 +30,6 @@ def read_dataset_from_aipstack_work(file_path: str):
             if '1' in label_line:
                 label = 1
             elif '0' in label_line:
-                label = 0
-            else:
-                print("Error!")
-            sequence_line = file.readline().strip()
-            labels.append(label)
-            sequences.append(sequence_line)
-    return sequences, labels
-
-def read_dataset_bd(file_path: str):
-    labels = []
-    sequences = []
-    with open(file_path, 'r') as file:
-        while True:
-            label_line = file.readline().strip()
-            if not label_line:
-                break
-            if 'pos' in label_line:
-                label = 1
-            elif 'neg' in label_line:
                 label = 0
             else:
                 print("Error!")
@@ -424,14 +361,14 @@ print(f"GBDT: n_estimators={args.gbdt_n_estimators}, max_depth={args.gbdt_max_de
 # Training Log Settings
 logging.basicConfig(filename='../training_log.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
-logging.info(f"启动训练，参数：mode={args.mode}, dataset_random_state={args.dataset_random_state}, "
+logging.info(f"initiate training, parameters: mode={args.mode}, dataset_random_state={args.dataset_random_state}, "
              f"xgb: ({args.xgb_n_estimators},{args.xgb_max_depth}), "
              f"rf: ({args.rf_n_estimators},{args.rf_max_depth}), "
              f"lgb: ({args.lgb_n_estimators},{args.lgb_max_depth}), "
              f"gbdt: ({args.gbdt_n_estimators},{args.gbdt_max_depth})")
 
 # Data Reading & Feature Extraction
-sequences, labels = read_dataset_from_aipstack_work('AIP.txt')
+sequences, labels = read_dataset_aip('AIP.txt')
 X_train_seq = sequences[419:]
 X_test_seq = sequences[:419]
 y_train = labels[419:]
@@ -439,18 +376,8 @@ y_test = labels[:419]
 
 X_train = extract_features(X_train_seq)
 X_test = extract_features(X_test_seq)
-print("Feature extraction complete, training set shape:", X_train.shape)
-print("Test Set Shape:", X_test.shape)
 
 # ML: K=5 Cross-Validation(4-Dimensional Metric Features)
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from xgboost import XGBClassifier
-import lightgbm as lgb
-from sklearn.metrics import (accuracy_score, f1_score, matthews_corrcoef,
-                             precision_score, recall_score, roc_auc_score, roc_curve)
-from sklearn.model_selection import KFold
-from sklearn.base import clone
-
 base_models = [
     ('xgb', XGBClassifier(n_estimators=args.xgb_n_estimators, max_depth=args.xgb_max_depth,
                           use_label_encoder=False, eval_metric='logloss', random_state=args.xgb_random_seed)),
@@ -487,8 +414,6 @@ for i, (name, model) in enumerate(base_models):
     print(f"modle {name} complete")
 
 print("ML K=5 stacking complete")
-print("meta_train shape:", meta_train.shape)
-print("meta_test shape:", meta_test.shape)
 
 #  DL: ResNext(64 Input Layer Neurons+5 Residual Blocks+70 Epochs)
 class ResNextBlock(layers.Layer):
@@ -549,8 +474,7 @@ best_metrics = {
     "Precision": 0,
     "Recall": 0,
     "F1 Score": 0,
-    "MCC": 0,
-    "Threshold": 0.42
+    "MCC": 0
 }
 best_prediction = None
 best_prediction_binary = None
@@ -562,7 +486,7 @@ for i in range(n_repeats):
                                validation_split=0.2, verbose=1,
                                callbacks=[early_stop, reduce_lr])
     predictions = fusion_model.predict(meta_test)
-    threshold = 0.42
+    threshold = 0.31
     predictions_binary = (predictions > threshold).astype(int)
 
     auc_val = roc_auc_score(y_test, predictions)
@@ -574,7 +498,7 @@ for i in range(n_repeats):
 
     print(f"Test Set Indicators: ACC={acc:.4f}, AUC={auc_val:.4f}, Precision={prec:.4f}, Recall={rec:.4f}, F1={f1:.4f}, MCC={mcc_val:.4f}")
 
-    if acc > best_metrics["Accuracy"] and auc_val > 0.85:
+    if auc_val > best_metrics["AUC"]:
         best_metrics["Accuracy"] = acc
         best_metrics["AUC"] = auc_val
         best_metrics["Precision"] = prec
@@ -600,12 +524,12 @@ plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
-plt.title('Receiver Operating Characteristic (ROC) Curve')
+plt.title('ROC Curve of NeXtMD')
 plt.legend(loc="lower right")
 plt.show()
 
 def save_results_to_excel(metrics: dict, predictions, predictions_binary,
-                          folder_name="best_results_aip_resnext_optimized_cv_v2"):
+                          folder_name="best_results_aip_NeXtMD"):
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
     current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
