@@ -17,13 +17,26 @@ Schematic illustration of the NeXtMD framework. (A) Overview of the NeXtMD archi
 * lightgbm==3.3.5 
 * tensorflow==2.12.0
 
-`<hello world>` 
-<conda create -n NeXtMD_env python=3.8>
+## Installation
+1. Create a new environment: `<conda>` 
+```conda create -n NeXtMD_env python=3.8```
+2. Activate the environment:
+```conda activate NeXtMD_env```
+3. Install NeXtMD in the environment:
+```pip install numpy==1.24.3```
+...
 
 ## Datasets
 AIP.txt is the main AIP dataset for training and testing NeXtMD.
+AIP_train_set_converted.fasta and AIP_test_set_converted.fasta comes from AIP.txt
 AMP.txt is the AMP dataset for testing NeXtMD's transferability across peptide tasks.
 The other .txt are external testing datasets.
+
+## Codes
+NeXtMD_final.py is the model codes of NeXtMD from read data, feature extraction, training to model testing.
+Amino_acid_attribution_score.py is using for AIP datasets' amino acid analysis.
+Sequence_length_detection.py is using for AIP datasets' sequence length analysis.
+Characteristic_ablation.py & MLmodel _ablation.py are using for NeXtMD's ablation testing.
 
 ## contact
 If you have any questions, comments, or would like to report a bug, please file a Github issue or contact me.
