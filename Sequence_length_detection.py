@@ -45,7 +45,7 @@ y_positions = np.arange(len(bin_labels))
 max_pos_count = np.max(pos_counts) if len(pos_counts) > 0 else 0
 max_neg_count = np.max(neg_counts) if len(neg_counts) > 0 else 0
 
-# 设置图像大小，宽度保持8，高度调整为4
+# Set the image size, keep the width at 8 and adjust the height to 4
 plt.figure(figsize=(8, 4))
 
 # Plot positive bars to the right
@@ -87,14 +87,14 @@ plt.axvline(0, color='black', linewidth=1)
 
 # Set y-ticks with our bin labels
 plt.yticks(y_positions, bin_labels, fontsize=10, fontweight='bold', color='black')
-# 同时设置 x 轴刻度标签样式（若有需要）
+# Setting the x-axis scale label style
 plt.xticks(fontsize=10, fontweight='bold', color='black')
 
-# Axis labels and title in English (均为黑色加粗)
+# Axis labels and title in English 
 plt.xlabel("Number of Peptides", fontsize=12, fontweight='bold', color='black')
 plt.title("AIP Sequence Length Distribution", fontsize=14, fontweight='bold', color='black')
 
-# Legend设置字体加粗
+# Legend sets the font bold
 plt.legend(prop={'weight': 'bold'}, edgecolor='black')
 
 plt.tight_layout()
