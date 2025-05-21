@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.textpath import TextPath
 from matplotlib.patches import PathPatch
 from matplotlib import transforms
-import matplotlib.colors as mcolors  # 用于生成自定义渐变色
+import matplotlib.colors as mcolors  
 import collections
 
 # -----------------------------
@@ -25,8 +25,8 @@ amino_acid_colors = {
     'F': '#f58231',
     'G': '#911eb4',
     'H': '#46f0f0',
-    'I': '#d2f53c',  # I 使用此颜色
-    'K': '#f032e6',  # K 使用此颜色
+    'I': '#d2f53c',  
+    'K': '#f032e6',  
     'L': '#fabebe',
     'M': '#008080',
     'N': '#e6beff',
@@ -47,11 +47,11 @@ standard_alphabet = list(amino_acid_colors.keys())
 num_layers = 5
 
 # -----------------------------
-# 自定义渐变色（用于热图）
+# Custom gradient colors (for heatmaps)
 # -----------------------------
-# Positive (AIP) 从白色到珊瑚粉
+# Positive (AIP) 
 cmap_positive = mcolors.LinearSegmentedColormap.from_list("positive_cmap", ["#FFFFFF", "#EA6C84"])
-# Negative (Non-AIP) 从白色到浅蓝
+# Negative (Non-AIP) 
 cmap_negative = mcolors.LinearSegmentedColormap.from_list("negative_cmap", ["#FFFFFF", "#5AA3CB"])
 
 # -----------------------------
@@ -59,13 +59,13 @@ cmap_negative = mcolors.LinearSegmentedColormap.from_list("negative_cmap", ["#FF
 # -----------------------------
 def model_attribution_scores(seq, num_layers=5):
     """
-    对于给定序列 seq，返回一个 shape=(num_layers, len(seq)) 的矩阵，按下列属性计算：
+    For a given sequence seq, return a matrix with shape=(num_layers, len(seq)) by the following properties:
       Layer 1: Hydrophobicity (Kyte–Doolittle scale)
       Layer 2: Net Charge (K, R: +1; D, E: -1; others: 0)
       Layer 3: Polarity (approximate)
       Layer 4: Molecular Weight (Dalton)
       Layer 5: Side Chain Volume (approximate)
-    未定义的残基赋值为0。
+    Undefined residues are assigned a value of 0.
     """
     hydro = {'A': 1.8, 'C': 2.5, 'D': -3.5, 'E': -3.5, 'F': 2.8,
              'G': -0.4, 'H': -3.2, 'I': 4.5, 'K': -3.9, 'L': 3.8,
@@ -103,9 +103,9 @@ def model_attribution_scores(seq, num_layers=5):
 # -----------------------------
 def read_sequences(file_path):
     """
-    读取文件，每两行为一组：
-      第一行为标签（1=AIP, 0=Non-AIP）
-      第二行为氨基酸序列
+    Read the file in groups of two rows:
+    First row of tags (1=AIP, 0=Non-AIP)
+    Second row is the amino acid sequence
     """
     labels = []
     sequences = []
@@ -116,7 +116,7 @@ def read_sequences(file_path):
         sequences.append(lines[i+1])
     return labels, sequences
 
-# 请修改文件名为实际文件
+# Please change the filename to the actual document
 labels, seqs = read_sequences('AIP.txt')
 aip_seqs = [s for l, s in zip(labels, seqs) if l == 1]
 non_aip_seqs = [s for l, s in zip(labels, seqs) if l == 0]
@@ -126,10 +126,10 @@ non_aip_seqs = [s for l, s in zip(labels, seqs) if l == 0]
 # -----------------------------
 def aggregate_group_attribution(group_samples, num_layers, alphabet=standard_alphabet):
     """
-    对 group_samples 每个样本利用 model_attribution_scores 得到归因矩阵，
-    对每层对标准氨基酸累加归因得分及计数，
-    并计算平均值。最后对每层进行 min-max 归一化，使每层数值映射到 [0,1].
-    返回矩阵 shape=(num_layers, len(alphabet))
+    For each sample of group_samples, an imputation matrix was obtained using model_attribution_scores.
+    For each stratum, imputation scores and counts were accumulated for the standard amino acid pair
+    The mean value was calculated. Finally, min-max normalization is applied to each layer so that the values in each layer are mapped to [0,1].
+    Return matrix shape=(num_layers, len(alphabet))
     """
     sum_scores = {layer: {aa: 0.0 for aa in alphabet} for layer in range(num_layers)}
     count_scores = {layer: {aa: 0 for aa in alphabet} for layer in range(num_layers)}
@@ -160,7 +160,7 @@ agg_aip_matrix, agg_order = aggregate_group_attribution(aip_seqs, num_layers, st
 agg_non_aip_matrix, _ = aggregate_group_attribution(non_aip_seqs, num_layers, standard_alphabet)
 
 # -----------------------------
-# 4. 绘制 Aggregated Heatmap（传入自定义的 cmap 参数）
+# 4. Draw Aggregated Heatmap (pass custom cmap parameter)
 # -----------------------------
 def plot_aggregated_heatmap(matrix, residue_order, title, cmap='viridis'):
     plt.figure(figsize=(max(8, len(residue_order) * 0.5), 4))
@@ -172,7 +172,7 @@ def plot_aggregated_heatmap(matrix, residue_order, title, cmap='viridis'):
     plt.yticks(ticks=np.arange(matrix.shape[0]), labels=[f"Layer {i+1}" for i in range(matrix.shape[0])], fontsize=10)
     plt.setp(plt.gca().get_xticklabels(), fontweight='bold', color='black')
     plt.setp(plt.gca().get_yticklabels(), fontweight='bold', color='black')
-    # 生成 colorbar，并对其中刻度标签加粗
+    # Generate a colorbar and bold the scale labels in it.
     cbar = plt.colorbar(im)
     plt.setp(cbar.ax.get_yticklabels(), fontweight='bold', color='black')
     plt.tight_layout()
@@ -189,9 +189,9 @@ def get_order(seq_list, alphabet=standard_alphabet):
                 order.append(ch)
     return order
 
-global_order = get_order(seqs, standard_alphabet)         # 全局顺序用于柱状图
-order_aip = get_order(aip_seqs, standard_alphabet)          # AIP logo 顺序
-order_non_aip = get_order(non_aip_seqs, standard_alphabet)    # Non-AIP logo 顺序
+global_order = get_order(seqs, standard_alphabet)         # Global order for bar charts
+order_aip = get_order(aip_seqs, standard_alphabet)          # AIP logo sequences
+order_non_aip = get_order(non_aip_seqs, standard_alphabet)    # Non-AIP logo sequences
 
 # -----------------------------
 # 6. Compute Amino Acid Count (Raw Count)
@@ -214,12 +214,12 @@ count_non_aip_global = compute_amino_acid_count(non_aip_seqs, global_order)
 # -----------------------------
 def plot_amino_acid_logo(count_dict, order, title, color_map=amino_acid_colors, gap=0.1):
     """
-    绘制类似 DNA motif 的 logo 图：
-      - 横轴依次排列 order 中的氨基酸；
-      - 字母高度按其出现数量归一化（最大高度设置为5）显示；
-      - 为避免重叠，在每个字母后加上固定间距 gap；
-      - 图中的标题、坐标轴标签及刻度文字均为黑色加粗；
-      - 氨基酸图形采用原有设定的颜色。
+    Draw a logo diagram that resembles a DNA motif:
+      - The horizontal axis lists the amino acids in order;
+      - The height of the letters is normalized by the number of occurrences (maximum height is set to 5);
+      - To avoid overlap, each letter is followed by a fixed-pitch gap;
+      - The title, axis labels, and scale text are bolded in black;
+      - Amino acid graphs are in the original set of colors.
     """
     max_count = max(count_dict.values()) if count_dict else 1e-9
     if max_count <= 0:
@@ -228,13 +228,13 @@ def plot_amino_acid_logo(count_dict, order, title, color_map=amino_acid_colors, 
     x_pos = 0
     for aa in order:
         cnt = count_dict[aa]
-        letter_height = cnt / max_count * 5   # 最大字母高度为5单位
+        letter_height = cnt / max_count * 5   # Maximum letter height of 5 units
         tp = TextPath((0, 0), aa, size=1,
                       prop=matplotlib.font_manager.FontProperties(family='Arial'))
         bb = tp.get_extents()
         base_width = bb.width
         base_height = bb.height
-        sx = 1.0 / base_width  # 固定字母宽度为1单位
+        sx = 1.0 / base_width  # Fixed letter width of 1 unit
         sy = letter_height / base_height
         transform = transforms.Affine2D().scale(sx, sy).translate(x_pos, 0)
         path = transform.transform_path(tp)
@@ -271,7 +271,7 @@ def plot_count_bar_chart(count_dict_aip, count_dict_non_aip, order, title):
     )
     plt.xticks(x, order, rotation=90, fontsize=10)
     plt.setp(plt.gca().get_xticklabels(), fontweight='bold', color='black')
-    # 设置 y 轴刻度为黑色加粗
+    # Set the y-axis scale to black and bold
     plt.setp(plt.gca().get_yticklabels(), fontweight='bold', color='black')
     plt.xlabel("Amino Acid", fontsize=12, fontweight='bold', color='black')
     plt.ylabel("Count", fontsize=12, fontweight='bold', color='black')
@@ -284,7 +284,7 @@ def plot_count_bar_chart(count_dict_aip, count_dict_non_aip, order, title):
 # 9. Generate Final 5 Plots
 # -----------------------------
 
-# (1) AIP Aggregated Attribution Distribution Heatmap（使用 Positive 渐变色）
+# (1) AIP Aggregated Attribution Distribution Heatmap(using Positive gradient colors)
 plot_aggregated_heatmap(
     agg_aip_matrix,
     standard_alphabet,
@@ -292,7 +292,7 @@ plot_aggregated_heatmap(
     cmap=cmap_positive
 )
 
-# (2) Non-AIP Aggregated Attribution Distribution Heatmap（使用 Negative 渐变色）
+# (2) Non-AIP Aggregated Attribution Distribution Heatmap(using Negative gradient colors)
 plot_aggregated_heatmap(
     agg_non_aip_matrix,
     standard_alphabet,
@@ -306,6 +306,6 @@ plot_amino_acid_logo(count_aip_ordered, order_aip, "AIP Motif-like Amino Acid Lo
 # (4) Non-AIP Motif-like Amino Acid Logo
 plot_amino_acid_logo(count_non_aip_ordered, order_non_aip, "Non-AIP Motif-like Amino Acid Logo")
 
-# (5) Amino Acid Count Comparison Bar Chart (使用全局顺序)
+# (5) Amino Acid Count Comparison Bar Chart (using global order)
 plot_count_bar_chart(count_aip_global, count_non_aip_global, global_order,
                      "Amino Acid Count Comparison (AIP vs Non-AIP)")
