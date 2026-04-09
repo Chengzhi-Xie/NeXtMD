@@ -38,5 +38,8 @@ Amino_acid_attribution_score.py is using for AIP datasets' amino acid analysis.
 Sequence_length_detection.py is using for AIP datasets' sequence length analysis.
 Characteristic_ablation.py & MLmodel _ablation.py are using for NeXtMD's ablation testing.
 
+## Cite this work
+Xie C, Wei Y, Luo X, Yang H, Lai H, Dao F, Feng J, Lv H. NeXtMD: a new generation of machine learning and deep learning stacked hybrid framework for accurate identification of anti-inflammatory peptides. BMC Biol. 2025 Jul 15;23(1):212. doi: 10.1186/s12915-025-02314-8. PMID: 40660190; PMCID: PMC12261603.
+
 ## Contact
 If you have any questions, comments, or would like to report a bug, please file a Github issue or contact me.
